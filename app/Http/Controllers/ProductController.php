@@ -2,43 +2,42 @@
 
 namespace App\Http\Controllers;
 use App\Models\Product;
+use Illuminate\Support\Facades\Storage;
 
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    //
     protected $product;
-    public function __construct(Product $product){
-        $this->product= $product;
+    public function __construct(Product $product)
+    {
+        $this->product = $product;
     }
-
-    public function index(){
-        $products = $this->product->latest()->paginate(5);
+    public function index()
+    {
+        $products = $this->product->all();
         return view('product.index', compact('products'));
     }
-    public function create(){
+    public function create()
+    {
         return view('product.create');
     }
-    public function store(Request $request){
-        $this->product->create([
-            'title' => $request->title,
-            'description' => $request->description,
-          
-        ]);
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('images'), $imageName);
-            $request->merge(['image' => $imageName]);
-        }
-        return redirect()->route('product.index');                
-    }
-    public function show($id)
+    public function store(Request $request)
     {
-        $product = Product::find($id);
-        
-        return view('product.show', compact('product'));
+        $data = $request->validate([
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Adjust file validation rules
+        ]);
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products'); // Store the image in the 'public/products' directory
+            $data['image'] = $imagePath;
+        }
+
+        $this->product->create($data);
+
+        return redirect()->route('product.index');
     }
     public function edit($id)
     {
@@ -47,22 +46,29 @@ class ProductController extends Controller
     }
     public function update(Request $request, $id)
     {
-        $this->product->find($id)->update([
-            'title' => $request->title,
-            'description' => $request->description,
-
-    
+        $data = $request->validate([
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Adjust file validation rules
         ]);
-        
+
+        $product = $this->product->find($id);
+
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('images'), $imageName);
-            $request->merge(['image' => $imageName]);
+            // Delete the old image if it exists
+            if (Storage::exists($product->image)) {
+                Storage::delete($product->image);
+            }
+
+            $imagePath = $request->file('image')->store('products'); // Store the new image in the 'public/products' directory
+            $data['image'] = $imagePath;
         }
-      
+
+        $product->update($data);
+
         return redirect()->route('product.index');
     }
+
     public function destroy($id)
     {
         $this->product->find($id)->delete();

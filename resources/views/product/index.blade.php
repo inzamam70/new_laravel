@@ -45,19 +45,10 @@
                                 Dashboard
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                Orders
-                            </a>
-                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link" href="#">
                                 Products
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                Customers
                             </a>
                         </li>
                     </ul>
@@ -81,14 +72,24 @@
                         <th scope="col">Action</th>
                     </tr>
                 </thead>
+                <?php
+                    $sl =1;
+                ?>
+
                 <tbody>
+                    @foreach($products as $product)
                     <tr>
-                        <th scope="row">1</th>
-                        <td>Mark</td>
-                        <td>Otto</td>
-                        <td>@mdo</td>
-                        <td>edit</td>
+                        <th scope="row">{{ $sl++ }}</th>
+                        <td>{{ $product->title }}</td>
+                        <td>{{ $product->description }}</td>
+                        <td><img src="{{ asset('storage/app/'.$product->image) }}" alt="ji" width="100"></td>
+                        <td>
+                            <a href="{{ route('product.edit', $product->id) }}"><button type="button" class="btn btn-primary">Edit</button></a>
+                            <a href="{{ route('product.destroy', $product->id) }}"><button type="button" class="btn btn-danger">Delete</button></a>
+                        </td>
                     </tr>
+                    @endforeach
+
                 </tbody>
                 </table>
             </main>
